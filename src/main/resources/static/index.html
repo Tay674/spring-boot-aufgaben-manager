@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Meine Aufgaben-App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 620px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            color: #2c3e50;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        input[type="text"], select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            background-color: white;
+        }
+        input[type="text"] {
+            flex: 1;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .btn-add {
+            background-color: #3498db;
+            color: white;
+            font-size: 16px;
+        }
+        .btn-add:hover { background-color: #2980b9; }
+        #fehlerMeldung {
+            color: #e74c3c;
+            font-size: 14px;
+            margin: 5px 0 15px 0;
+            min-height: 20px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            gap: 10px;
+        }
+        li:last-child { border-bottom: none; }
+        .aufgabe-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .aufgabe-text {
+            font-size: 16px;
+        }
+        .erledigt {
+            text-decoration: line-through;
+            color: #95a5a6;
+        }
+        .kategorie-badge {
+            background-color: #e8f4fd;
+            color: #2980b9;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+        .btn-gruppe {
+            display: flex;
+            gap: 6px;
+        }
+        .btn-status {
+            background-color: #2ecc71;
+            color: white;
+            font-size: 13px;
+        }
+        .btn-status:hover { background-color: #27ae60; }
+        .btn-status.offen {
+            background-color: #f39c12;
+        }
+        .btn-status.offen:hover { background-color: #d68910; }
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+            font-size: 13px;
+        }
+        .btn-delete:hover { background-color: #c0392b; }
+   
+		
+		.header-bar {
+		    display: flex;
+		    justify-content: space-between;
+		    align-items: center;
+		    margin-bottom: 20px;
+		}
+		.header-bar h1 {
+		    margin: 0;
+		}
+		.btn-logout {
+		    background-color: #95a5a6;
+		    color: white;
+		    text-decoration: none;
+		    padding: 8px 14px;
+		    border-radius: 6px;
+		    font-size: 14px;
+		    font-weight: bold;
+		    transition: background-color 0.2s;
+		}
+		.btn-logout:hover {
+		    background-color: #7f8c8d;
+		}
+
+		
+		
+		 </style>
+</head>
+<body>
+    <div class="container">
+		<div class="header-bar">
+		    <h1>Meine Aufgaben-App</h1>
+		    <a href="/logout" class="btn-logout">Abmelden</a>
+		</div>
+
+        <div class="input-group">
+            <input type="text" id="neuerTitel" placeholder="Neue Aufgabe eingeben...">
+            <select id="kategorieAuswahl">
+                <option value="">Ohne Kategorie</option>
+            </select>
+            <button class="btn-add" onclick="aufgabeErstellen()">Hinzufügen</button>
+        </div>
+        <p id="fehlerMeldung"></p>
+
+        <ul id="aufgabenListe"></ul>
+    </div>
+
+    <script>
+        async function ladeKategorien() {
+            const antwort = await fetch('/kategorien');
+            const kategorien = await antwort.json();
+
+            const select = document.getElementById('kategorieAuswahl');
+            kategorien.forEach(kat => {
+                const option = document.createElement('option');
+                option.value = kat.id;
+                option.textContent = kat.name;
+                select.appendChild(option);
+            });
+        }
+
+        async function ladeAufgaben() {
+            const antwort = await fetch('/aufgaben');
+            const aufgaben = await antwort.json();
+
+            const liste = document.getElementById('aufgabenListe');
+            liste.innerHTML = '';
+
+            aufgaben.forEach(aufgabe => {
+                const eintrag = document.createElement('li');
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'aufgabe-info';
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = aufgabe.titel;
+                textSpan.className = 'aufgabe-text' + (aufgabe.erledigt ? ' erledigt' : '');
+                infoDiv.appendChild(textSpan);
+
+                if (aufgabe.kategorie) {
+                    const badge = document.createElement('span');
+                    badge.textContent = aufgabe.kategorie.name;
+                    badge.className = 'kategorie-badge';
+                    infoDiv.appendChild(badge);
+                }
+
+                const btnGruppe = document.createElement('div');
+                btnGruppe.className = 'btn-gruppe';
+
+                const statusBtn = document.createElement('button');
+                statusBtn.textContent = aufgabe.erledigt ? 'Wieder öffnen' : 'Erledigt';
+                statusBtn.className = 'btn-status' + (aufgabe.erledigt ? ' offen' : '');
+                statusBtn.onclick = () => statusUmschalten(aufgabe);
+
+                const loeschBtn = document.createElement('button');
+                loeschBtn.textContent = 'Löschen';
+                loeschBtn.className = 'btn-delete';
+                loeschBtn.onclick = () => aufgabeLoeschen(aufgabe.id);
+
+                btnGruppe.appendChild(statusBtn);
+                btnGruppe.appendChild(loeschBtn);
+
+                eintrag.appendChild(infoDiv);
+                eintrag.appendChild(btnGruppe);
+                liste.appendChild(eintrag);
+            });
+        }
+
+        async function aufgabeErstellen() {
+            const titelFeld = document.getElementById('neuerTitel');
+            const katSelect = document.getElementById('kategorieAuswahl');
+            const fehlerFeld = document.getElementById('fehlerMeldung');
+            fehlerFeld.textContent = '';
+
+            const daten = {
+                titel: titelFeld.value,
+                erledigt: false,
+                kategorie: katSelect.value ? { id: parseInt(katSelect.value) } : null
+            };
+
+            const antwort = await fetch('/aufgaben', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(daten)
+            });
+
+            if (antwort.ok) {
+                titelFeld.value = '';
+                katSelect.value = '';
+                ladeAufgaben();
+            } else {
+                const fehlerDaten = await antwort.json();
+                fehlerFeld.textContent = fehlerDaten.titel || 'Fehler beim Speichern';
+            }
+        }
+
+        async function statusUmschalten(aufgabe) {
+            await fetch('/aufgaben/' + aufgabe.id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    titel: aufgabe.titel,
+                    erledigt: !aufgabe.erledigt,
+                    kategorie: aufgabe.kategorie
+                })
+            });
+            ladeAufgaben();
+        }
+
+        async function aufgabeLoeschen(id) {
+            await fetch('/aufgaben/' + id, { method: 'DELETE' });
+            ladeAufgaben();
+        }
+
+        ladeKategorien();
+        ladeAufgaben();
+    </script>
+</body>
+</html>
