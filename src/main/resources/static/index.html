@@ -120,41 +120,36 @@
             font-size: 13px;
         }
         .btn-delete:hover { background-color: #c0392b; }
-   
-		
-		.header-bar {
-		    display: flex;
-		    justify-content: space-between;
-		    align-items: center;
-		    margin-bottom: 20px;
-		}
-		.header-bar h1 {
-		    margin: 0;
-		}
-		.btn-logout {
-		    background-color: #95a5a6;
-		    color: white;
-		    text-decoration: none;
-		    padding: 8px 14px;
-		    border-radius: 6px;
-		    font-size: 14px;
-		    font-weight: bold;
-		    transition: background-color 0.2s;
-		}
-		.btn-logout:hover {
-		    background-color: #7f8c8d;
-		}
-
-		
-		
-		 </style>
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header-bar h1 {
+            margin: 0;
+        }
+        .btn-logout {
+            background-color: #95a5a6;
+            color: white;
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .btn-logout:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-		<div class="header-bar">
-		    <h1>Meine Aufgaben-App</h1>
-		    <a href="/logout" class="btn-logout">Abmelden</a>
-		</div>
+        <div class="header-bar">
+            <h1>Meine Aufgaben-App</h1>
+            <a href="/logout" class="btn-logout">Abmelden</a>
+        </div>
 
         <div class="input-group">
             <input type="text" id="neuerTitel" placeholder="Neue Aufgabe eingeben...">
@@ -238,7 +233,7 @@
             const daten = {
                 titel: titelFeld.value,
                 erledigt: false,
-                kategorie: katSelect.value ? { id: parseInt(katSelect.value) } : null
+                kategorieId: katSelect.value ? parseInt(katSelect.value) : null
             };
 
             const antwort = await fetch('/aufgaben', {
@@ -258,21 +253,29 @@
         }
 
         async function statusUmschalten(aufgabe) {
-            await fetch('/aufgaben/' + aufgabe.id, {
+            const antwort = await fetch('/aufgaben/' + aufgabe.id, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     titel: aufgabe.titel,
                     erledigt: !aufgabe.erledigt,
-                    kategorie: aufgabe.kategorie
+                    kategorieId: aufgabe.kategorie ? aufgabe.kategorie.id : null
                 })
             });
-            ladeAufgaben();
+
+            if (antwort.ok) {
+                ladeAufgaben();
+            }
         }
 
         async function aufgabeLoeschen(id) {
-            await fetch('/aufgaben/' + id, { method: 'DELETE' });
-            ladeAufgaben();
+            const antwort = await fetch('/aufgaben/' + id, {
+                method: 'DELETE'
+            });
+
+            if (antwort.ok) {
+                ladeAufgaben();
+            }
         }
 
         ladeKategorien();

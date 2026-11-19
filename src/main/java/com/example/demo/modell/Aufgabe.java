@@ -13,9 +13,9 @@ public class Aufgabe {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id ;
+	
 	@NotBlank(message = "Der Titel darf nicht leer sein")
 	@Size(min=3, max=100, message="Der Titel muss zwischen 3 und 100 Zeichen lang sein")
-	
 	private String titel;
 	private boolean erledigt;
 	

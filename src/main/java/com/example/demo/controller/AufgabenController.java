@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
-import com.example.demo.modell.Aufgabe;
+import com.example.demo.dto.AufgabenResponse;
+import com.example.demo.dto.AufgabenRequest;
 import com.example.demo.service.AufgabenService;
 
 import jakarta.validation.Valid;
@@ -29,23 +30,23 @@ public class AufgabenController {
 	}
 
 	@GetMapping()
-	public List<Aufgabe> getAufgaben() {
+	public List<AufgabenResponse> getAufgaben() {
 		return aufgabenService.Liste();
 	}
 
 	@PostMapping()
-	public Aufgabe neueAufgabe(@Valid @RequestBody Aufgabe aufgabe) {
-		return aufgabenService.neueAufgabe(aufgabe);
+	public AufgabenResponse neueAufgabe(@Valid @RequestBody AufgabenRequest request) {
+		return aufgabenService.neueAufgabe(request);
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<Aufgabe> updateAufgabe(@PathVariable int id,@Valid @RequestBody Aufgabe geaenderteAufgabe) {
+	public ResponseEntity<AufgabenResponse> updateAufgabe(@PathVariable int id,@Valid @RequestBody AufgabenRequest geaenderteAufgabe) {
 		return aufgabenService.updateAufgabe(id, geaenderteAufgabe).map(aufgabe -> ResponseEntity.ok(aufgabe))
 				.orElse(ResponseEntity.notFound().build());
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Aufgabe> deleteAufgabe(@PathVariable int id) {
+	public ResponseEntity<AufgabenResponse> deleteAufgabe(@PathVariable int id) {
 		if (aufgabenService.deleteAufgabe(id) == true) {
 			return ResponseEntity.noContent().build();
 		}
@@ -54,7 +55,7 @@ public class AufgabenController {
 	}
 
 	@GetMapping("/filter")
-	public List<Aufgabe> aufgabeFilter(@RequestParam boolean erledigt) {
+	public List<AufgabenResponse> aufgabeFilter(@RequestParam boolean erledigt) {
 		return aufgabenService.aufgabenNachStatus(erledigt);
 	}
 
