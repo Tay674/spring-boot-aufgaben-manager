@@ -31,11 +31,11 @@ public class AufgabenController {
 
 	@GetMapping()
 	public List<AufgabenResponse> getAufgaben() {
-		return aufgabenService.Liste();
+		return aufgabenService.liste();
 	}
 
 	@PostMapping()
-	public AufgabenResponse neueAufgabe(@Valid @RequestBody AufgabenRequest request) {
+	public AufgabenResponse neueAufgabe(@Valid @RequestBody AufgabenRequest request){
 		return aufgabenService.neueAufgabe(request);
 	}
 
@@ -47,7 +47,7 @@ public class AufgabenController {
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<AufgabenResponse> deleteAufgabe(@PathVariable int id) {
-		if (aufgabenService.deleteAufgabe(id) == true) {
+		if (aufgabenService.deleteAufgabe(id)) {
 			return ResponseEntity.noContent().build();
 		}
 
