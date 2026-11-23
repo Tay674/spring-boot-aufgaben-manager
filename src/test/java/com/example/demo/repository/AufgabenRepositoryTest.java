@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 
 import com.example.demo.modell.Aufgabe;
+import com.example.demo.modell.Prioritaet;
 
 @DataJpaTest
 public class AufgabenRepositoryTest {
@@ -20,18 +21,33 @@ public class AufgabenRepositoryTest {
 	@Test
 	void findByErledigt_sollNurPassendeAufgabenZurueckgeben() {
 		
-		Aufgabe aufgabeA = new Aufgabe("Steuer machen", true);
-		Aufgabe aufgabeb = new Aufgabe("Einkaufen gehen",false);
+		Aufgabe aufgabeA = new Aufgabe("Steuer machen", true,null);
+		Aufgabe aufgabeb = new Aufgabe("Einkaufen gehen",false,null);
 		
 		aufgabenRepository.save(aufgabeA);
 		aufgabenRepository.save(aufgabeb);
 		
 		List<Aufgabe> offeneAufgaben = aufgabenRepository.findByErledigt(false);
 		
-		assertEquals("Einkaufen gehen", offeneAufgaben.get(0).getTitel());
 		assertEquals(1, offeneAufgaben.size());
+		assertEquals("Einkaufen gehen", offeneAufgaben.get(0).getTitel());
 		
 		
+		
+		
+	}
+	
+	@Test
+	void findByPrioritaet_sollNurAufgabenMitPassenderPrioritaetZurueckgeben(){
+		Aufgabe aufgabeA = new Aufgabe("Steuer machen", true,Prioritaet.HOCH);
+		Aufgabe aufgabeb = new Aufgabe("Einkaufen gehen",false,Prioritaet.MITTEL);
+		aufgabenRepository.save(aufgabeA);
+		aufgabenRepository.save(aufgabeb);
+		
+		List<Aufgabe>aufgabenNachPrio = aufgabenRepository.findByPrioritaet(Prioritaet.HOCH);
+		
+		assertEquals(1, aufgabenNachPrio.size());
+		assertEquals(Prioritaet.HOCH, aufgabenNachPrio.get(0).getPrioritaet());
 		
 	}
 }

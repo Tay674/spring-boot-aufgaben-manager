@@ -1,6 +1,8 @@
 package com.example.demo.modell;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -19,6 +21,9 @@ public class Aufgabe {
 	private String titel;
 	private boolean erledigt;
 	
+	@Enumerated(EnumType.STRING)
+	private Prioritaet prioritaet = Prioritaet.MITTEL; 
+	
 	@ManyToOne
 	private Kategorie kategorie;
 	
@@ -26,9 +31,10 @@ public class Aufgabe {
 		
 	}
 	
-	public Aufgabe(String titel , boolean erledigt) {
+	public Aufgabe(String titel , boolean erledigt,Prioritaet prioritaet) {
 		this.titel=titel;
 		this.erledigt = erledigt;
+		setPrioritaet(prioritaet);
 	}
 	
 	
@@ -42,6 +48,10 @@ public class Aufgabe {
 	
 	public void setKategorie(Kategorie kategorie) {
 		this.kategorie= kategorie;
+	}
+	
+	public void setPrioritaet(Prioritaet prioritaet) {
+		this.prioritaet =(prioritaet != null) ? prioritaet : Prioritaet.NIEDRIG;
 	}
 	
 	public int getId() {
@@ -60,5 +70,7 @@ public class Aufgabe {
 		return kategorie;
 	}
 	
-	
+	public Prioritaet getPrioritaet() {
+		return prioritaet;
+	}
 }

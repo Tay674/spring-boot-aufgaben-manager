@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.demo.dto.AufgabenRequest;
 import com.example.demo.dto.AufgabenResponse;
+import com.example.demo.modell.Prioritaet;
 import com.example.demo.service.AufgabenService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -44,7 +45,7 @@ public class AufgabenControllerTest {
 @Test
 void getAufgaben_sollListeMitStatus200Zurueckgeben() throws Exception {
 	
-	when(aufgabenService.liste()).thenReturn(List.of(new AufgabenResponse(1, "Einkaufen", false, null, null)));
+	when(aufgabenService.liste()).thenReturn(List.of(new AufgabenResponse(1, "Einkaufen", false, null, null, null)));
 	mockMvc.perform(get("/aufgaben")).andExpect(status().isOk()).andExpect(jsonPath("$[0].titel").value("Einkaufen"));
 }
 
@@ -61,10 +62,10 @@ void neueAufgabe_soll400Zurueckgeben_wennTitelLeerIst() throws Exception {
 
 @Test
 void neueAufgabe_soll404Zurueckgeben_wennKategorieNichtExistiert() throws Exception {
-	when(aufgabenService.neueAufgabe(new AufgabenRequest("Gueltiger Titel", false, 99))).thenThrow(new EntityNotFoundException("Kategorie mit ID 99 nicht gefunden"));
+	when(aufgabenService.neueAufgabe(new AufgabenRequest("Gueltiger Titel", false, 99,Prioritaet.HOCH))).thenThrow(new EntityNotFoundException("Kategorie mit ID 99 nicht gefunden"));
 	mockMvc.perform(post("/aufgaben").with(csrf())
 			.contentType(MediaType.APPLICATION_JSON)
-			.content("{\"titel\": \"Gueltiger Titel\", \"erledigt\": false, \"kategorieId\": 99}"))
+			.content("{\"titel\": \"Gueltiger Titel\", \"erledigt\": false, \"kategorieId\": 99, \"prioritaet\": \"HOCH\"}"))
 			.andExpect(status().isNotFound())
 			.andExpect(jsonPath("$.fehler").value("Kategorie mit ID 99 nicht gefunden"));
 	

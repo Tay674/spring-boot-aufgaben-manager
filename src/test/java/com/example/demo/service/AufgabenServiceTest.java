@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.demo.dto.AufgabenRequest;
 import com.example.demo.dto.AufgabenResponse;
 import com.example.demo.modell.Aufgabe;
+import com.example.demo.modell.Prioritaet;
 import com.example.demo.repository.AufgabenRepository;
 import com.example.demo.repository.KategorieRepository;
 
@@ -47,8 +48,8 @@ public class AufgabenServiceTest {
 	@Test
 	void neueAufgabe_sollAufgabeSpeichernUndAlsDtoZurueckgeben() {
 
-		when(aufgabenRepository.save(any(Aufgabe.class))).thenReturn(new Aufgabe("Testen lernen", false));
-		AufgabenResponse ergebnis = aufgabenService.neueAufgabe(new AufgabenRequest("Testen lernen",false,null));
+		when(aufgabenRepository.save(any(Aufgabe.class))).thenReturn(new Aufgabe("Testen lernen", false,null));
+		AufgabenResponse ergebnis = aufgabenService.neueAufgabe(new AufgabenRequest("Testen lernen",false,null,null));
 		
 		assertEquals("Testen lernen", ergebnis.titel());
 		assertFalse(ergebnis.erledigt());
@@ -59,7 +60,7 @@ public class AufgabenServiceTest {
 	void neueAufgabe_sollExceptionWerfen_wennKategorieNichtExistiert(){
 		 
 		 when(kategorieRepositroy.findById(99)).thenReturn(Optional.empty());
-		 assertThrows(EntityNotFoundException.class, ()-> aufgabenService.neueAufgabe(new AufgabenRequest("Test", false, 99)));
+		 assertThrows(EntityNotFoundException.class, ()-> aufgabenService.neueAufgabe(new AufgabenRequest("Test", false, 99,null)));
 		 verify(aufgabenRepository, never()).save(any());
 		 
 	}
@@ -87,8 +88,8 @@ public class AufgabenServiceTest {
 	
 	@Test
 	void updateAufgabe_sollAufgabeAktualisieren_wennIdExistiert() {
-		Aufgabe aufgabe = new Aufgabe("Alter Titel",false);
-		AufgabenRequest aRequest = new AufgabenRequest("Neuer Titel", true, null);
+		Aufgabe aufgabe = new Aufgabe("Alter Titel",false,null);
+		AufgabenRequest aRequest = new AufgabenRequest("Neuer Titel", true, null,null);
 		
 		when(aufgabenRepository.findById(1)).thenReturn(Optional.of(aufgabe));
 		when(aufgabenRepository.save(any(Aufgabe.class))).thenReturn(aufgabe);
@@ -106,10 +107,20 @@ public class AufgabenServiceTest {
 	void updateAufgabe_sollLeeresOptionalZurueckgeben_wennIdNichtExistiert () {
 		
 		when(aufgabenRepository.findById(99)).thenReturn(Optional.empty());
-		AufgabenRequest aRequest = new AufgabenRequest("Neuer Titel", true, null);
+		AufgabenRequest aRequest = new AufgabenRequest("Neuer Titel", true, null,null);
 		Optional<AufgabenResponse> ergebnis = aufgabenService.updateAufgabe(99, aRequest);
 		assertTrue(ergebnis.isEmpty());
 		verify(aufgabenRepository,never()).save(any());
+		
+	}
+	
+	@Test
+	void neueAufgabe_sollStandardPrioritaetNiedrigSetzen_wennPrioritaetNullIst() {
+		AufgabenRequest aRequest = new AufgabenRequest("Neuer Titel", true, null,null);
+		when(aufgabenRepository.save(any(Aufgabe.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		AufgabenResponse ergebnis = aufgabenService.neueAufgabe(aRequest);
+		assertEquals(Prioritaet.NIEDRIG, ergebnis.prioritaet());
+		verify(aufgabenRepository).save(any(Aufgabe.class));
 		
 	}
 	

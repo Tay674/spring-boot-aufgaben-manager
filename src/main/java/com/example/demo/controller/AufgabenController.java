@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.AufgabenResponse;
+import com.example.demo.modell.Prioritaet;
 import com.example.demo.dto.AufgabenRequest;
 import com.example.demo.service.AufgabenService;
 
@@ -57,6 +58,12 @@ public class AufgabenController {
 	@GetMapping("/filter")
 	public List<AufgabenResponse> aufgabeFilter(@RequestParam boolean erledigt) {
 		return aufgabenService.aufgabenNachStatus(erledigt);
+	}
+	
+	@GetMapping("/prioritaet")
+	public List<AufgabenResponse> prioritaetFilter(@RequestParam Prioritaet prioritaet){
+		return aufgabenService.aufgabenNachPrioritaet(prioritaet);
+		
 	}
 
 }

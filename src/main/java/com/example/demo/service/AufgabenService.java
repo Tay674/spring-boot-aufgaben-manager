@@ -1,16 +1,14 @@
 package com.example.demo.service;
 
-import com.example.demo.controller.AufgabenController;
-import com.example.demo.exception.GlobalExceptionHandler;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.AufgabenResponse;
 import com.example.demo.dto.AufgabenRequest;
 import com.example.demo.modell.Aufgabe;
+import com.example.demo.modell.Prioritaet;
 import com.example.demo.repository.AufgabenRepository;
 import com.example.demo.repository.KategorieRepository;
 
@@ -40,11 +38,11 @@ public class AufgabenService {
 
 	
 	public AufgabenResponse neueAufgabe( AufgabenRequest request)  {
-		Aufgabe neueAufgabe = new Aufgabe(request.titel(), request.erledigt());
-		if(request.kategorieId()!= null) {
+		Aufgabe neueAufgabe = new Aufgabe(request.titel(), request.erledigt(),request.prioritaet());
+		if(request.kategorieId()!= null ) {
 		neueAufgabe.setKategorie( kategorieRepository.findById(request.kategorieId()).orElseThrow(() -> new EntityNotFoundException("Kategorie mit ID " + request.kategorieId() + " nicht gefunden")));
 		}
-		
+			
 		return toResponse(aufgabenRepository.save(neueAufgabe));
 	}
 	
@@ -61,6 +59,8 @@ public class AufgabenService {
 					}else {
 					a.setKategorie(null);
 				}
+				
+				
 				
 				Aufgabe gespeichert = aufgabenRepository.save(a);
 				
@@ -84,11 +84,14 @@ public class AufgabenService {
 	}
 	
 	
+	public List<AufgabenResponse>aufgabenNachPrioritaet(Prioritaet prioritaet){
+		return aufgabenRepository.findByPrioritaet(prioritaet).stream().map(this::toResponse).toList();
+	}
 	
 	private  AufgabenResponse toResponse(Aufgabe a) {
 		String katName = (a.getKategorie() != null) ? a.getKategorie().getName() : null;
 		Integer katId =   ( a.getKategorie() !=null) ?  a.getKategorie().getId() : null;
-		return new AufgabenResponse(a.getId(),a.getTitel(),a.isErledigt(),katId,katName);
+		return new AufgabenResponse(a.getId(),a.getTitel(),a.isErledigt(),katId,katName,a.getPrioritaet());
 	}
 	
 }
