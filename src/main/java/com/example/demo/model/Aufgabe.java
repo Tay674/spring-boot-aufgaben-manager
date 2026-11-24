@@ -1,4 +1,6 @@
-package com.example.demo.modell;
+package com.example.demo.model;
+
+import java.time.LocalDate;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,6 +29,9 @@ public class Aufgabe {
 	@ManyToOne
 	private Kategorie kategorie;
 	
+	private LocalDate faelligAm;
+	
+	
 	public Aufgabe() {
 		
 	}
@@ -54,6 +59,10 @@ public class Aufgabe {
 		this.prioritaet =(prioritaet != null) ? prioritaet : Prioritaet.NIEDRIG;
 	}
 	
+	public void setFaelligAm(LocalDate faelligAm) {
+		this.faelligAm = faelligAm;
+	}
+	
 	public int getId() {
 		return id;
 	}
@@ -73,4 +82,10 @@ public class Aufgabe {
 	public Prioritaet getPrioritaet() {
 		return prioritaet;
 	}
+
+	public LocalDate getFaelligAm() {
+		return faelligAm;
+	}
+
+
 }

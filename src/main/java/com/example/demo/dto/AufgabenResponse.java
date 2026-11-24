@@ -1,6 +1,8 @@
 package com.example.demo.dto;
 
-import com.example.demo.modell.Prioritaet;
+import java.time.LocalDate;
+
+import com.example.demo.model.Prioritaet;
 
 public record AufgabenResponse(
 		int id,
@@ -8,5 +10,6 @@ public record AufgabenResponse(
 		boolean erledigt,
 		Integer kategorieId,
 		String kategorieName,
-		Prioritaet prioritaet
+		Prioritaet prioritaet,
+		LocalDate faelligAm
 		) {}

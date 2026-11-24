@@ -1,4 +1,4 @@
-package com.example.demo.modell;
+package com.example.demo.model;
 
 public enum Prioritaet {
 

@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 
-import com.example.demo.modell.Aufgabe;
-import com.example.demo.modell.Prioritaet;
+import com.example.demo.model.Aufgabe;
+import com.example.demo.model.Prioritaet;
 
 @DataJpaTest
 public class AufgabenRepositoryTest {

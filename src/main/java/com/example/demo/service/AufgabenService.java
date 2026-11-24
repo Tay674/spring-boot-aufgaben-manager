@@ -6,9 +6,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.AufgabenResponse;
+import com.example.demo.model.Aufgabe;
+import com.example.demo.model.Prioritaet;
 import com.example.demo.dto.AufgabenRequest;
-import com.example.demo.modell.Aufgabe;
-import com.example.demo.modell.Prioritaet;
 import com.example.demo.repository.AufgabenRepository;
 import com.example.demo.repository.KategorieRepository;
 
@@ -42,7 +42,7 @@ public class AufgabenService {
 		if(request.kategorieId()!= null ) {
 		neueAufgabe.setKategorie( kategorieRepository.findById(request.kategorieId()).orElseThrow(() -> new EntityNotFoundException("Kategorie mit ID " + request.kategorieId() + " nicht gefunden")));
 		}
-			
+		neueAufgabe.setFaelligAm(request.faelligAm());
 		return toResponse(aufgabenRepository.save(neueAufgabe));
 	}
 	
@@ -52,7 +52,7 @@ public class AufgabenService {
 			.map(a -> {
 				a.setTitel(request.titel());
 				a.setErledigt(request.erledigt());
-			
+				a.setFaelligAm(request.faelligAm());
 				if(request.kategorieId() != null) {
 						a.setKategorie(kategorieRepository.findById(request.kategorieId()).orElseThrow(() -> new EntityNotFoundException("Kategorie mit ID " + request.kategorieId() + " nicht gefunden")));
 					
@@ -91,7 +91,7 @@ public class AufgabenService {
 	private  AufgabenResponse toResponse(Aufgabe a) {
 		String katName = (a.getKategorie() != null) ? a.getKategorie().getName() : null;
 		Integer katId =   ( a.getKategorie() !=null) ?  a.getKategorie().getId() : null;
-		return new AufgabenResponse(a.getId(),a.getTitel(),a.isErledigt(),katId,katName,a.getPrioritaet());
+		return new AufgabenResponse(a.getId(),a.getTitel(),a.isErledigt(),katId,katName,a.getPrioritaet(),a.getFaelligAm());
 	}
 	
 }

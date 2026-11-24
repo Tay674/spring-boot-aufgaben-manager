@@ -16,7 +16,7 @@
         .container {
             background: white;
             width: 100%;
-            max-width: 620px;
+            max-width: 720px;
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
@@ -28,20 +28,22 @@
         }
         .input-group {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 10px;
         }
-        input[type="text"], select {
+        input[type="text"], input[type="date"], select {
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 15px;
             background-color: white;
+            font-family: inherit;
         }
         input[type="text"] {
-            flex: 1;
+            flex: 1 1 220px;
         }
-        input[type="text"]:focus, select:focus {
+        input[type="text"]:focus, input[type="date"]:focus, select:focus {
             outline: none;
             border-color: #3498db;
         }
@@ -56,7 +58,7 @@
         .btn-add {
             background-color: #3498db;
             color: white;
-            font-size: 16px;
+            font-size: 15px;
         }
         .btn-add:hover { background-color: #2980b9; }
         #fehlerMeldung {
@@ -82,8 +84,9 @@
         .aufgabe-info {
             flex: 1;
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         .aufgabe-text {
             font-size: 16px;
@@ -92,13 +95,35 @@
             text-decoration: line-through;
             color: #95a5a6;
         }
-        .kategorie-badge {
-            background-color: #e8f4fd;
-            color: #2980b9;
+        .badge {
             font-size: 12px;
             font-weight: bold;
             padding: 3px 8px;
             border-radius: 12px;
+        }
+        .kategorie-badge {
+            background-color: #e8f4fd;
+            color: #2980b9;
+        }
+        .prio-NIEDRIG {
+            background-color: #eef2f5;
+            color: #636e72;
+        }
+        .prio-MITTEL {
+            background-color: #fef5e7;
+            color: #d68910;
+        }
+        .prio-HOCH {
+            background-color: #fdedec;
+            color: #c0392b;
+        }
+        .datum-badge {
+            background-color: #f4f6f7;
+            color: #566573;
+        }
+        .datum-ueberfaellig {
+            background-color: #fdedec;
+            color: #c0392b;
         }
         .btn-gruppe {
             display: flex;
@@ -156,6 +181,12 @@
             <select id="kategorieAuswahl">
                 <option value="">Ohne Kategorie</option>
             </select>
+            <select id="prioritaetAuswahl">
+                <option value="NIEDRIG">Prio: Niedrig</option>
+                <option value="MITTEL">Prio: Mittel</option>
+                <option value="HOCH">Prio: Hoch</option>
+            </select>
+            <input type="date" id="faelligAmAuswahl" title="Fälligkeitsdatum">
             <button class="btn-add" onclick="aufgabeErstellen()">Hinzufügen</button>
         </div>
         <p id="fehlerMeldung"></p>
@@ -177,12 +208,19 @@
             });
         }
 
+        function formatiereDatum(isoDatum) {
+            const [jahr, monat, tag] = isoDatum.split('-');
+            return `${tag}.${monat}.${jahr}`;
+        }
+
         async function ladeAufgaben() {
             const antwort = await fetch('/aufgaben');
             const aufgaben = await antwort.json();
 
             const liste = document.getElementById('aufgabenListe');
             liste.innerHTML = '';
+
+			const heuteIso = new Date().toISOString().split('T')[0];
 
             aufgaben.forEach(aufgabe => {
                 const eintrag = document.createElement('li');
@@ -195,11 +233,29 @@
                 textSpan.className = 'aufgabe-text' + (aufgabe.erledigt ? ' erledigt' : '');
                 infoDiv.appendChild(textSpan);
 
-                if (aufgabe.kategorie) {
+                // Kategorie-Badge (nutzt jetzt das flache DTO-Feld kategorieName)
+                if (aufgabe.kategorieName) {
                     const badge = document.createElement('span');
-                    badge.textContent = aufgabe.kategorie.name;
-                    badge.className = 'kategorie-badge';
+                    badge.textContent = aufgabe.kategorieName;
+                    badge.className = 'badge kategorie-badge';
                     infoDiv.appendChild(badge);
+                }
+
+                // Prioritaet-Badge
+                if (aufgabe.prioritaet) {
+                    const prioBadge = document.createElement('span');
+                    prioBadge.textContent = aufgabe.prioritaet;
+                    prioBadge.className = 'badge prio-' + aufgabe.prioritaet;
+                    infoDiv.appendChild(prioBadge);
+                }
+
+                // Faelligkeitsdatum-Badge (rot hervorgehoben, wenn ueberfaellig & noch offen)
+                if (aufgabe.faelligAm) {
+                    const datumBadge = document.createElement('span');
+                    const istUeberfaellig = !aufgabe.erledigt && aufgabe.faelligAm < heuteIso;
+                    datumBadge.textContent = 'Fällig: ' + formatiereDatum(aufgabe.faelligAm);
+                    datumBadge.className = 'badge ' + (istUeberfaellig ? 'datum-ueberfaellig' : 'datum-badge');
+                    infoDiv.appendChild(datumBadge);
                 }
 
                 const btnGruppe = document.createElement('div');
@@ -227,59 +283,65 @@
         async function aufgabeErstellen() {
             const titelFeld = document.getElementById('neuerTitel');
             const katSelect = document.getElementById('kategorieAuswahl');
+            const prioSelect = document.getElementById('prioritaetAuswahl');
+            const datumFeld = document.getElementById('faelligAmAuswahl');
             const fehlerFeld = document.getElementById('fehlerMeldung');
             fehlerFeld.textContent = '';
 
             const daten = {
                 titel: titelFeld.value,
                 erledigt: false,
-                kategorieId: katSelect.value ? parseInt(katSelect.value) : null
-            };
+                kategorieId: katSelect.value ? parseInt(katSelect.value) : null,
+                prioritaet: prioSelect.value,
+				faelligAm: datumFeld.value ? datumFeld.value : null
+				};
+				const antwort = await fetch('/aufgaben', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(daten)
+				});
+				if (antwort.ok) {
+				titelFeld.value = '';
+				katSelect.value = '';
+				prioSelect.value = 'NIEDRIG';
+				datumFeld.value = '';
+				ladeAufgaben();
+				} else {
+				const fehlerDaten = await antwort.json();
+				fehlerFeld.textContent = fehlerDaten.titel || fehlerDaten.faelligAm || fehlerDaten.fehler || 'Fehler beim Speichern';
+				}
+				}
+				        async function statusUmschalten(aufgabe) {
+				            const antwort = await fetch('/aufgaben/' + aufgabe.id, {
+				                method: 'PUT',
+				                headers: { 'Content-Type': 'application/json' },
+				                body: JSON.stringify({
+				                    titel: aufgabe.titel,
+				                    erledigt: !aufgabe.erledigt,
+				                    kategorieId: aufgabe.kategorieId,
+				                    prioritaet: aufgabe.prioritaet,
+				                    faelligAm: aufgabe.faelligAm
+				                })
+				            });
 
-            const antwort = await fetch('/aufgaben', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(daten)
-            });
+				            if (antwort.ok) {
+				                ladeAufgaben();
+				            }
+				        }
 
-            if (antwort.ok) {
-                titelFeld.value = '';
-                katSelect.value = '';
-                ladeAufgaben();
-            } else {
-                const fehlerDaten = await antwort.json();
-                fehlerFeld.textContent = fehlerDaten.titel || 'Fehler beim Speichern';
-            }
-        }
+				        async function aufgabeLoeschen(id) {
+				            const antwort = await fetch('/aufgaben/' + id, {
+				                method: 'DELETE'
+				            });
 
-        async function statusUmschalten(aufgabe) {
-            const antwort = await fetch('/aufgaben/' + aufgabe.id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    titel: aufgabe.titel,
-                    erledigt: !aufgabe.erledigt,
-                    kategorieId: aufgabe.kategorie ? aufgabe.kategorie.id : null
-                })
-            });
+				            if (antwort.ok) {
+				                ladeAufgaben();
+				            }
+				        }
 
-            if (antwort.ok) {
-                ladeAufgaben();
-            }
-        }
+				        ladeKategorien();
+				        ladeAufgaben();
+				    </script>
+				</body>
+				</html>
 
-        async function aufgabeLoeschen(id) {
-            const antwort = await fetch('/aufgaben/' + id, {
-                method: 'DELETE'
-            });
-
-            if (antwort.ok) {
-                ladeAufgaben();
-            }
-        }
-
-        ladeKategorien();
-        ladeAufgaben();
-    </script>
-</body>
-</html>

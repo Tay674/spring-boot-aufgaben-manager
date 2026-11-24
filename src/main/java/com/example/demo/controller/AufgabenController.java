@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.AufgabenResponse;
-import com.example.demo.modell.Prioritaet;
+import com.example.demo.model.Prioritaet;
 import com.example.demo.dto.AufgabenRequest;
 import com.example.demo.service.AufgabenService;
 

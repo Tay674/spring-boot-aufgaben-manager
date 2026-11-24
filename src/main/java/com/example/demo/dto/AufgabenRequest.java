@@ -1,7 +1,10 @@
 package com.example.demo.dto;
 
-import com.example.demo.modell.Prioritaet;
+import java.time.LocalDate;
 
+import com.example.demo.model.Prioritaet;
+
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -11,5 +14,7 @@ public record AufgabenRequest(
 		String titel,
 		boolean erledigt,
 		Integer kategorieId,
-		Prioritaet prioritaet
+		Prioritaet prioritaet,
+		@FutureOrPresent(message="Das Fälligkeitsdatum darf nicht in der Vergangenheit liegen")
+		LocalDate faelligAm
 		) {}
