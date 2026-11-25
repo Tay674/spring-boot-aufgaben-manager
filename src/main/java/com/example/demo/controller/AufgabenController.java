@@ -9,6 +9,9 @@ import jakarta.validation.Valid;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,8 +34,9 @@ public class AufgabenController {
 	}
 
 	@GetMapping()
-	public List<AufgabenResponse> getAufgaben() {
-		return aufgabenService.liste();
+	public Page<AufgabenResponse> getAufgaben(@RequestParam(required = false) String titel,@RequestParam(required = false) Boolean erledigt,@RequestParam(required = false) Prioritaet prioritaet,@PageableDefault(size = 10, sort = "id") Pageable pageable) {
+		
+		return aufgabenService.sucheAufgaben(titel, erledigt, prioritaet, pageable);
 	}
 
 	@PostMapping()
@@ -65,5 +69,8 @@ public class AufgabenController {
 		return aufgabenService.aufgabenNachPrioritaet(prioritaet);
 		
 	}
+	
+	
+	
 
 }

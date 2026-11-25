@@ -3,6 +3,8 @@ package com.example.demo.service;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.AufgabenResponse;
@@ -46,6 +48,10 @@ public class AufgabenService {
 		return toResponse(aufgabenRepository.save(neueAufgabe));
 	}
 	
+	
+	public Page<AufgabenResponse> sucheAufgaben(String titel,Boolean erledigt,Prioritaet prioritaet,Pageable pageable) {
+		return aufgabenRepository.sucheAufgaben(titel, erledigt, prioritaet, pageable).map(this::toResponse);
+	}
 	
 	public Optional<AufgabenResponse> updateAufgabe( int id, @Valid AufgabenRequest request)  {
 	return aufgabenRepository.findById(id)

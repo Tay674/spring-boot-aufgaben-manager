@@ -14,8 +14,10 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -46,8 +48,9 @@ public class AufgabenControllerTest {
 @Test
 void getAufgaben_sollListeMitStatus200Zurueckgeben() throws Exception {
 	
-	when(aufgabenService.liste()).thenReturn(List.of(new AufgabenResponse(1, "Einkaufen", false, null, null, null,null)));
-	mockMvc.perform(get("/aufgaben")).andExpect(status().isOk()).andExpect(jsonPath("$[0].titel").value("Einkaufen"));
+	when(aufgabenService.sucheAufgaben(any(), any(), any(), any())).thenReturn(new PageImpl<>(List.of(new AufgabenResponse(1, "Einkaufen", false, null, null, null,null))));
+	
+	mockMvc.perform(get("/aufgaben")).andExpect(status().isOk()).andExpect(jsonPath("$.content[0].titel").value("Einkaufen"));
 }
 
 

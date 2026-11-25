@@ -7,6 +7,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import com.example.demo.model.Aufgabe;
 import com.example.demo.model.Prioritaet;
@@ -49,5 +51,18 @@ public class AufgabenRepositoryTest {
 		assertEquals(1, aufgabenNachPrio.size());
 		assertEquals(Prioritaet.HOCH, aufgabenNachPrio.get(0).getPrioritaet());
 		
+	}
+	
+	
+	@Test
+	void sucheAufgaben_sollNachTitelStatusUndPrioritaetFiltern() {
+		aufgabenRepository.save( new Aufgabe("Wocheneinkauf erledigen", false, Prioritaet.HOCH));
+		aufgabenRepository.save(  new Aufgabe("Einkaufszettel schreiben",  true, Prioritaet.HOCH));
+		aufgabenRepository.save(  new Aufgabe("Sport machen",  false, Prioritaet.NIEDRIG));
+	
+		Page<Aufgabe> ergebnis = aufgabenRepository.sucheAufgaben("einkauf", false, Prioritaet.HOCH, PageRequest.of(0, 10));
+		
+		assertEquals(1, ergebnis.getTotalElements());
+		assertEquals("Wocheneinkauf erledigen", ergebnis.getContent().get(0).getTitel());
 	}
 }

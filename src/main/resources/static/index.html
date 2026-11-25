@@ -16,7 +16,7 @@
         .container {
             background: white;
             width: 100%;
-            max-width: 720px;
+            max-width: 760px;
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
@@ -26,22 +26,29 @@
             text-align: center;
             color: #2c3e50;
         }
-        .input-group {
+        .input-group, .filter-bar {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+        }
+        .filter-bar {
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 20px;
         }
         input[type="text"], input[type="date"], select {
-            padding: 12px;
+            padding: 10px 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
-            font-size: 15px;
+            font-size: 14px;
             background-color: white;
             font-family: inherit;
         }
         input[type="text"] {
-            flex: 1 1 220px;
+            flex: 1 1 200px;
         }
         input[type="text"]:focus, input[type="date"]:focus, select:focus {
             outline: none;
@@ -58,9 +65,15 @@
         .btn-add {
             background-color: #3498db;
             color: white;
-            font-size: 15px;
+            font-size: 14px;
         }
         .btn-add:hover { background-color: #2980b9; }
+        .btn-reset {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            font-size: 13px;
+        }
+        .btn-reset:hover { background-color: #bdc3c7; }
         #fehlerMeldung {
             color: #e74c3c;
             font-size: 14px;
@@ -167,6 +180,23 @@
         .btn-logout:hover {
             background-color: #7f8c8d;
         }
+        .pagination-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .btn-page {
+            background-color: #34495e;
+            color: white;
+            font-size: 13px;
+        }
+        .btn-page:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -191,16 +221,42 @@
         </div>
         <p id="fehlerMeldung"></p>
 
+        <div class="filter-bar">
+            <input type="text" id="sucheTitel" placeholder="Nach Titel suchen..." oninput="filterZuruecksetzenUndLaden()">
+            <select id="filterStatus" onchange="filterZuruecksetzenUndLaden()">
+                <option value="">Alle Status</option>
+                <option value="false">Nur Offene</option>
+                <option value="true">Nur Erledigte</option>
+            </select>
+            <select id="filterPrioritaet" onchange="filterZuruecksetzenUndLaden()">
+                <option value="">Alle Prioritäten</option>
+                <option value="HOCH">Hoch</option>
+                <option value="MITTEL">Mittel</option>
+                <option value="NIEDRIG">Niedrig</option>
+            </select>
+            <button class="btn-reset" onclick="alleFilterLeeren()">Filter zurücksetzen</button>
+        </div>
+
         <ul id="aufgabenListe"></ul>
+
+        <div class="pagination-bar">
+            <button class="btn-page" id="btnZurueck" onclick="seiteWechseln(-1)">← Zurück</button>
+            <span id="seitenInfo">Seite 1 von 1</span>
+            <button class="btn-page" id="btnWeiter" onclick="seiteWechseln(1)">Weiter →</button>
+        </div>
     </div>
 
     <script>
+        let aktuelleSeite = 0;
+        const seitenGroesse = 5;
+
         async function ladeKategorien() {
             const antwort = await fetch('/kategorien');
             const kategorien = await antwort.json();
 
             const select = document.getElementById('kategorieAuswahl');
-            kategorien.forEach(kat => {
+			 select.innerHTML = '<option value="">Ohne Kategorie</option>';
+			 kategorien.forEach(kat => {
                 const option = document.createElement('option');
                 option.value = kat.id;
                 option.textContent = kat.name;
@@ -210,89 +266,108 @@
 
         function formatiereDatum(isoDatum) {
             const [jahr, monat, tag] = isoDatum.split('-');
-            return `${tag}.${monat}.${jahr}`;
+            return tag + '.' + monat + '.' + jahr;
+        }
+
+        function filterZuruecksetzenUndLaden() {
+            aktuelleSeite = 0;
+            ladeAufgaben();
+        }
+
+        function alleFilterLeeren() {
+            document.getElementById('sucheTitel').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterPrioritaet').value = '';
+            filterZuruecksetzenUndLaden();
+        }
+
+        function seiteWechseln(richtung) {
+            aktuelleSeite += richtung;
+            ladeAufgaben();
         }
 
         async function ladeAufgaben() {
-            const antwort = await fetch('/aufgaben');
-            const aufgaben = await antwort.json();
+            const params = new URLSearchParams();
+            params.append('page', aktuelleSeite);
+            params.append('size', seitenGroesse);
+
+            const suche = document.getElementById('sucheTitel').value.trim();
+            const status = document.getElementById('filterStatus').value;
+            const prio = document.getElementById('filterPrioritaet').value;
+
+            if (suche) params.append('titel', suche);
+            if (status !== '') params.append('erledigt', status);
+            if (prio) params.append('prioritaet', prio);
+
+            const antwort = await fetch('/aufgaben?' + params.toString());
+            const pageDaten = await antwort.json();
 
             const liste = document.getElementById('aufgabenListe');
             liste.innerHTML = '';
 
-			const heuteIso = new Date().toISOString().split('T')[0];
+            const heuteIso = new Date().toISOString().split('T');
 
-            aufgaben.forEach(aufgabe => {
+            pageDaten.content.forEach(aufgabe => {
                 const eintrag = document.createElement('li');
 
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'aufgabe-info';
-
-                const textSpan = document.createElement('span');
-                textSpan.textContent = aufgabe.titel;
-                textSpan.className = 'aufgabe-text' + (aufgabe.erledigt ? ' erledigt' : '');
-                infoDiv.appendChild(textSpan);
-
-                // Kategorie-Badge (nutzt jetzt das flache DTO-Feld kategorieName)
-                if (aufgabe.kategorieName) {
-                    const badge = document.createElement('span');
-                    badge.textContent = aufgabe.kategorieName;
-                    badge.className = 'badge kategorie-badge';
-                    infoDiv.appendChild(badge);
-                }
-
-                // Prioritaet-Badge
-                if (aufgabe.prioritaet) {
-                    const prioBadge = document.createElement('span');
-                    prioBadge.textContent = aufgabe.prioritaet;
-                    prioBadge.className = 'badge prio-' + aufgabe.prioritaet;
-                    infoDiv.appendChild(prioBadge);
-                }
-
-                // Faelligkeitsdatum-Badge (rot hervorgehoben, wenn ueberfaellig & noch offen)
-                if (aufgabe.faelligAm) {
-                    const datumBadge = document.createElement('span');
-                    const istUeberfaellig = !aufgabe.erledigt && aufgabe.faelligAm < heuteIso;
-                    datumBadge.textContent = 'Fällig: ' + formatiereDatum(aufgabe.faelligAm);
-                    datumBadge.className = 'badge ' + (istUeberfaellig ? 'datum-ueberfaellig' : 'datum-badge');
-                    infoDiv.appendChild(datumBadge);
-                }
-
-                const btnGruppe = document.createElement('div');
-                btnGruppe.className = 'btn-gruppe';
-
-                const statusBtn = document.createElement('button');
-                statusBtn.textContent = aufgabe.erledigt ? 'Wieder öffnen' : 'Erledigt';
-                statusBtn.className = 'btn-status' + (aufgabe.erledigt ? ' offen' : '');
-                statusBtn.onclick = () => statusUmschalten(aufgabe);
-
-                const loeschBtn = document.createElement('button');
-                loeschBtn.textContent = 'Löschen';
-                loeschBtn.className = 'btn-delete';
-                loeschBtn.onclick = () => aufgabeLoeschen(aufgabe.id);
-
-                btnGruppe.appendChild(statusBtn);
-                btnGruppe.appendChild(loeschBtn);
-
-                eintrag.appendChild(infoDiv);
-                eintrag.appendChild(btnGruppe);
-                liste.appendChild(eintrag);
-            });
-        }
-
-        async function aufgabeErstellen() {
-            const titelFeld = document.getElementById('neuerTitel');
-            const katSelect = document.getElementById('kategorieAuswahl');
-            const prioSelect = document.getElementById('prioritaetAuswahl');
-            const datumFeld = document.getElementById('faelligAmAuswahl');
-            const fehlerFeld = document.getElementById('fehlerMeldung');
-            fehlerFeld.textContent = '';
-
-            const daten = {
-                titel: titelFeld.value,
-                erledigt: false,
-                kategorieId: katSelect.value ? parseInt(katSelect.value) : null,
-                prioritaet: prioSelect.value,
+				const textSpan = document.createElement('span');
+				textSpan.textContent = aufgabe.titel;
+				textSpan.className = 'aufgabe-text' + (aufgabe.erledigt ? ' erledigt' : '');
+				infoDiv.appendChild(textSpan);
+				if (aufgabe.kategorieName) {
+				const badge = document.createElement('span');
+				badge.textContent = aufgabe.kategorieName;
+				badge.className = 'badge kategorie-badge';
+				infoDiv.appendChild(badge);
+				}
+				if (aufgabe.prioritaet) {
+				const prioBadge = document.createElement('span');
+				prioBadge.textContent = aufgabe.prioritaet;
+				prioBadge.className = 'badge prio-' + aufgabe.prioritaet;
+				infoDiv.appendChild(prioBadge);
+				}
+				if (aufgabe.faelligAm) {
+				const datumBadge = document.createElement('span');
+				const istUeberfaellig = !aufgabe.erledigt && aufgabe.faelligAm < heuteIso;
+				datumBadge.textContent = 'Fällig: ' + formatiereDatum(aufgabe.faelligAm);
+				datumBadge.className = 'badge ' + (istUeberfaellig ? 'datum-ueberfaellig' : 'datum-badge');
+				infoDiv.appendChild(datumBadge);
+				}
+				const btnGruppe = document.createElement('div');
+				btnGruppe.className = 'btn-gruppe';
+				const statusBtn = document.createElement('button');
+				statusBtn.textContent = aufgabe.erledigt ? 'Wieder öffnen' : 'Erledigt';
+				statusBtn.className = 'btn-status' + (aufgabe.erledigt ? ' offen' : '');
+				statusBtn.onclick = () => statusUmschalten(aufgabe);
+				const loeschBtn = document.createElement('button');
+				loeschBtn.textContent = 'Löschen';
+				loeschBtn.className = 'btn-delete';
+				loeschBtn.onclick = () => aufgabeLoeschen(aufgabe.id);
+				btnGruppe.appendChild(statusBtn);
+				btnGruppe.appendChild(loeschBtn);
+				eintrag.appendChild(infoDiv);
+				eintrag.appendChild(btnGruppe);
+				liste.appendChild(eintrag);
+				});
+				const gesamtSeiten = Math.max(pageDaten.totalPages, 1);
+				document.getElementById('seitenInfo').textContent = 'Seite ' + (pageDaten.number + 1) + ' von ' + gesamtSeiten + ' (' + pageDaten.totalElements + ' Aufgaben)';
+				document.getElementById('btnZurueck').disabled = pageDaten.first;
+				document.getElementById('btnWeiter').disabled = pageDaten.last;
+				}
+				async function aufgabeErstellen() {
+				const titelFeld = document.getElementById('neuerTitel');
+				const katSelect = document.getElementById('kategorieAuswahl');
+				const prioSelect = document.getElementById('prioritaetAuswahl');
+				const datumFeld = document.getElementById('faelligAmAuswahl');
+				const fehlerFeld = document.getElementById('fehlerMeldung');
+				fehlerFeld.textContent = '';
+				const daten = {
+				titel: titelFeld.value,
+				erledigt: false,
+				kategorieId: katSelect.value ? parseInt(katSelect.value) : null,
+				prioritaet: prioSelect.value,
 				faelligAm: datumFeld.value ? datumFeld.value : null
 				};
 				const antwort = await fetch('/aufgaben', {
@@ -311,37 +386,34 @@
 				fehlerFeld.textContent = fehlerDaten.titel || fehlerDaten.faelligAm || fehlerDaten.fehler || 'Fehler beim Speichern';
 				}
 				}
-				        async function statusUmschalten(aufgabe) {
-				            const antwort = await fetch('/aufgaben/' + aufgabe.id, {
-				                method: 'PUT',
-				                headers: { 'Content-Type': 'application/json' },
-				                body: JSON.stringify({
-				                    titel: aufgabe.titel,
-				                    erledigt: !aufgabe.erledigt,
-				                    kategorieId: aufgabe.kategorieId,
-				                    prioritaet: aufgabe.prioritaet,
-				                    faelligAm: aufgabe.faelligAm
-				                })
-				            });
-
-				            if (antwort.ok) {
-				                ladeAufgaben();
-				            }
-				        }
-
-				        async function aufgabeLoeschen(id) {
-				            const antwort = await fetch('/aufgaben/' + id, {
-				                method: 'DELETE'
-				            });
-
-				            if (antwort.ok) {
-				                ladeAufgaben();
-				            }
-				        }
-
+				async function statusUmschalten(aufgabe) {
+				const antwort = await fetch('/aufgaben/' + aufgabe.id, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+				titel: aufgabe.titel,
+				erledigt: !aufgabe.erledigt,
+				kategorieId: aufgabe.kategorieId,
+				prioritaet: aufgabe.prioritaet,
+				faelligAm: aufgabe.faelligAm
+				})
+				});
+				if (antwort.ok) {
+				ladeAufgaben();
+				}
+				}
+				async function aufgabeLoeschen(id) {
+				const antwort = await fetch('/aufgaben/' + id, {
+				method: 'DELETE'
+				});
+				if (antwort.ok) {
+				ladeAufgaben();
+				}
+				}
+				ladeKategorien();
+				ladeAufgaben();
 				        ladeKategorien();
 				        ladeAufgaben();
 				    </script>
 				</body>
 				</html>
-
