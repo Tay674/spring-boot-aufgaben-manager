@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import com.example.demo.model.Aufgabe;
+import com.example.demo.model.Benutzer;
 import com.example.demo.model.Prioritaet;
 
 @DataJpaTest
@@ -18,7 +19,7 @@ public class AufgabenRepositoryTest {
 
 	
 	@Autowired private AufgabenRepository aufgabenRepository;
-	
+	@Autowired private BenutzerRepository benutzerRepository;
 	
 	@Test
 	void findByErledigt_sollNurPassendeAufgabenZurueckgeben() {
@@ -53,16 +54,27 @@ public class AufgabenRepositoryTest {
 		
 	}
 	
-	
 	@Test
-	void sucheAufgaben_sollNachTitelStatusUndPrioritaetFiltern() {
-		aufgabenRepository.save( new Aufgabe("Wocheneinkauf erledigen", false, Prioritaet.HOCH));
-		aufgabenRepository.save(  new Aufgabe("Einkaufszettel schreiben",  true, Prioritaet.HOCH));
-		aufgabenRepository.save(  new Aufgabe("Sport machen",  false, Prioritaet.NIEDRIG));
-	
-		Page<Aufgabe> ergebnis = aufgabenRepository.sucheAufgaben("einkauf", false, Prioritaet.HOCH, PageRequest.of(0, 10));
-		
-		assertEquals(1, ergebnis.getTotalElements());
-		assertEquals("Wocheneinkauf erledigen", ergebnis.getContent().get(0).getTitel());
+	void sucheAufgaben_sollNurEigeneAufgabenDesBenutzersFinden() {
+	    Benutzer userA = benutzerRepository.save(new Benutzer("userA", "geheim123"));
+	    Benutzer userB = benutzerRepository.save(new Benutzer("userB", "geheim123"));
+
+	    Aufgabe a1 = new Aufgabe("Wocheneinkauf erledigen", false, Prioritaet.HOCH);
+	    a1.setBenutzer(userA);
+
+	    Aufgabe a2 = new Aufgabe("Wocheneinkauf fremd", false, Prioritaet.HOCH);
+	    a2.setBenutzer(userB);
+
+	    aufgabenRepository.save(a1);
+	    aufgabenRepository.save(a2);
+
+	    Page<Aufgabe> ergebnis = aufgabenRepository.sucheAufgaben(
+	        userA, "einkauf", false, Prioritaet.HOCH, PageRequest.of(0, 10)
+	    );
+
+	    assertEquals(1, ergebnis.getTotalElements());
+	    assertEquals("Wocheneinkauf erledigen", ergebnis.getContent().get(0).getTitel());
 	}
+	
+
 }

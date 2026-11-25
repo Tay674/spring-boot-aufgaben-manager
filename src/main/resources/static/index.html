@@ -352,9 +352,14 @@
 				liste.appendChild(eintrag);
 				});
 				const gesamtSeiten = Math.max(pageDaten.totalPages, 1);
-				document.getElementById('seitenInfo').textContent = 'Seite ' + (pageDaten.number + 1) + ' von ' + gesamtSeiten + ' (' + pageDaten.totalElements + ' Aufgaben)';
-				document.getElementById('btnZurueck').disabled = pageDaten.first;
-				document.getElementById('btnWeiter').disabled = pageDaten.last;
+				    const meta = pageDaten.page;
+				    const gesamtSeiten = Math.max(meta.totalPages, 1);
+				    document.getElementById('seitenInfo').textContent =
+				        'Seite ' + (meta.number + 1) + ' von ' + gesamtSeiten + ' (' + meta.totalElements + ' Aufgaben)';
+				    document.getElementById('btnZurueck').disabled = meta.number === 0;
+				    document.getElementById('btnWeiter').disabled = (meta.number + 1) >= meta.totalPages;
+				}
+
 				}
 				async function aufgabeErstellen() {
 				const titelFeld = document.getElementById('neuerTitel');

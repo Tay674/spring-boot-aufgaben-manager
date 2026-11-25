@@ -7,25 +7,33 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.example.demo.dto.AufgabenRequest;
 import com.example.demo.dto.AufgabenResponse;
 import com.example.demo.model.Aufgabe;
+import com.example.demo.model.Benutzer;
 import com.example.demo.model.Prioritaet;
 import com.example.demo.repository.AufgabenRepository;
+import com.example.demo.repository.BenutzerRepository;
 import com.example.demo.repository.KategorieRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -43,7 +51,18 @@ public class AufgabenServiceTest {
 	@InjectMocks
 	private AufgabenService aufgabenService;
 	
-	
+	@Mock
+	private BenutzerRepository benutzerRepository;
+
+	@BeforeEach
+	void setupSecurity() {
+	    SecurityContextHolder.getContext().setAuthentication(
+	        new UsernamePasswordAuthenticationToken("testuser", "geheim123")
+	    );
+	    lenient().when(benutzerRepository.findByUsername("testuser"))
+	        .thenReturn(Optional.of(new Benutzer("testuser", "geheim123")));
+	}
+
 	
 	@Test
 	void neueAufgabe_sollAufgabeSpeichernUndAlsDtoZurueckgeben() {
@@ -69,7 +88,7 @@ public class AufgabenServiceTest {
 	
 	@Test
 	void deleteAufgabe_deleteGehtDurch() {
-		when(aufgabenRepository.existsById(1)).thenReturn(true);
+		when(aufgabenRepository.findByIdAndBenutzer(eq(1),any())).thenReturn(Optional.of(new Aufgabe("Test", false,null)));
 		boolean  geloescht = aufgabenService.deleteAufgabe(1);
 		assertTrue(geloescht);
 		verify(aufgabenRepository).deleteById(1);
@@ -79,7 +98,7 @@ public class AufgabenServiceTest {
 	
 	@Test
 	void deleteAufgabe_deleteGehtNichtDurch() {
-		when(aufgabenRepository.existsById(99)).thenReturn(false);
+		when(aufgabenRepository.findByIdAndBenutzer(eq(99), any())).thenReturn(Optional.empty());
 		boolean  geloescht = aufgabenService.deleteAufgabe(99);
 		assertFalse(geloescht);
 		verify(aufgabenRepository,never()).deleteById(anyInt());
@@ -91,7 +110,7 @@ public class AufgabenServiceTest {
 		Aufgabe aufgabe = new Aufgabe("Alter Titel",false,null);
 		AufgabenRequest aRequest = new AufgabenRequest("Neuer Titel", true, null,null,null);
 		
-		when(aufgabenRepository.findById(1)).thenReturn(Optional.of(aufgabe));
+		when(aufgabenRepository.findByIdAndBenutzer(eq(1),any())).thenReturn(Optional.of(aufgabe));
 		when(aufgabenRepository.save(any(Aufgabe.class))).thenReturn(aufgabe);
 		Optional<AufgabenResponse> ergebnis = aufgabenService.updateAufgabe(1, aRequest);
 		
@@ -106,7 +125,7 @@ public class AufgabenServiceTest {
 	@Test
 	void updateAufgabe_sollLeeresOptionalZurueckgeben_wennIdNichtExistiert () {
 		
-		when(aufgabenRepository.findById(99)).thenReturn(Optional.empty());
+		when(aufgabenRepository.findByIdAndBenutzer(eq(99), any())).thenReturn(Optional.empty());
 		AufgabenRequest aRequest = new AufgabenRequest("Neuer Titel", true, null,null,null);
 		Optional<AufgabenResponse> ergebnis = aufgabenService.updateAufgabe(99, aRequest);
 		assertTrue(ergebnis.isEmpty());
@@ -123,6 +142,10 @@ public class AufgabenServiceTest {
 		verify(aufgabenRepository).save(any(Aufgabe.class));
 		
 	}
+	
+	
+
+
 	
 	
 	

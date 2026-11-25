@@ -31,6 +31,8 @@ public class Aufgabe {
 	
 	private LocalDate faelligAm;
 	
+	@ManyToOne
+	private Benutzer benutzer;
 	
 	public Aufgabe() {
 		
@@ -43,49 +45,61 @@ public class Aufgabe {
 	}
 	
 	
-	public void setTitel(String titel) {
-		this.titel = titel;
-	}
-	
-	public void setErledigt(boolean erledigt) {
-		this.erledigt = erledigt;
-	}
-	
-	public void setKategorie(Kategorie kategorie) {
-		this.kategorie= kategorie;
-	}
-	
-	public void setPrioritaet(Prioritaet prioritaet) {
-		this.prioritaet =(prioritaet != null) ? prioritaet : Prioritaet.NIEDRIG;
-	}
-	
-	public void setFaelligAm(LocalDate faelligAm) {
-		this.faelligAm = faelligAm;
-	}
-	
 	public int getId() {
 		return id;
+	}
+	
+	
+	
+	public void setTitel(String titel) {
+		this.titel = titel;
 	}
 	
 	public String getTitel() {
 		return titel;
 	}
 	
+	public void setErledigt(boolean erledigt) {
+		this.erledigt = erledigt;
+	}
 	public boolean isErledigt() {
 		return erledigt;
 	}
+	
+	public void setKategorie(Kategorie kategorie) {
+		this.kategorie= kategorie;
+	}
+	
 	
 	public Kategorie getKategorie() {
 		return kategorie;
 	}
 	
+	public void setPrioritaet(Prioritaet prioritaet) {
+		this.prioritaet =(prioritaet != null) ? prioritaet : Prioritaet.NIEDRIG;
+	}
+	
+	
 	public Prioritaet getPrioritaet() {
 		return prioritaet;
 	}
+	
+	public void setFaelligAm(LocalDate faelligAm) {
+		this.faelligAm = faelligAm;
+	}
+	
 
 	public LocalDate getFaelligAm() {
 		return faelligAm;
 	}
 
-
+	
+	public void setBenutzer(Benutzer benutzer) {
+		this.benutzer = benutzer;
+	}
+	
+	public Benutzer getBenutzer() {
+		return benutzer;
+	}
+	
 }

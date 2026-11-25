@@ -36,6 +36,10 @@ public class GlobalExceptionHandler {
 	}
 	
 	
-	
+	@ExceptionHandler(IllegalArgumentException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public Map<String, String>doppelterNameFehler(IllegalArgumentException ex){
+		return Map.of("fehler",ex.getMessage());
+	}
 	
 }
